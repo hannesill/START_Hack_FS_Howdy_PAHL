@@ -1,32 +1,11 @@
-from neo4j import GraphDatabase
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
+SQLALCHEMY_DATABASE_URL = "mysql+mysqldb://root:password@127.0.0.1:3306/fellows"
 
-class Neo4jConnection:
-    def __init__(
-        self,
-        uri: str = "bolt://localhost:7687",
-        username: str = "neo4j",
-        password: str = "password",
-    ):
-        self.uri = uri
-        self.username = username
-        self.password = password
-        self.driver = GraphDatabase.driver(uri, auth=(username, password))
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-    def close(self):
-        if self.driver is not None:
-            self.driver.close()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-    def query(self, query, parameters=None, db=None):
-        with self.driver.session(database=db) as session:
-            result = session.write_transaction(_execute_query, query, parameters)
-            return result
-
-
-def _execute_query(tx, query, parameters):
-    result = tx.run(query, parameters)
-    try:
-        return [record for record in result]
-    except Exception as e:
-        print("Query failed:", e)
-        return None
+Base = declarative_base()

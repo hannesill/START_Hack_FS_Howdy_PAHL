@@ -1,108 +1,110 @@
-from __future__ import annotations
-import datetime
-from typing import List, Literal
-from pydantic import BaseModel, Field
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, Table, Text
+from sqlalchemy.orm import relationship
+from src.database import Base
 
 
-class Address(BaseModel):
-    """Represent an address"""
+class Address(Base):
+    __tablename__ = "addresses"
 
-    street: str
-    zip: int
-    city: str
-    country: str
-
-
-class Skill(BaseModel):
-    """Represents a skill"""
-
-    name: str
+    id = Column(Integer, primary_key=True, index=True)
+    street = Column(String(255), index=True)
+    zip = Column(String(20), index=True)
+    city = Column(String(100), index=True)
+    country = Column(String(100), index=True)
 
 
-class Education(BaseModel):
-    """Represents an education"""
+class Founder(Base):
+    __tablename__ = "founders"
 
-    name: str
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), index=True)
+    picture = Column(String(255))
+    mail = Column(String(255))
+    phone = Column(String(25))
+    linkedin = Column(String(255))
+    address_id = Column(Integer, ForeignKey("addresses.id"))
+    birthdate = Column(String(10))
+    last_update = Column(String(20))
 
-
-class Experience(BaseModel):
-    """Represents a professional experience"""
-
-    name: str
-
-
-class Investor(BaseModel):
-    """Represents an investor"""
-
-    name: str
+    address = relationship("Address")
 
 
-class KPI(BaseModel):
-    """Represents a key performance indicator"""
+class StartUp(Base):
+    __tablename__ = "startups"
 
-    name: str
-    value: str
-    unit: str
-    date: datetime.datetime
-    is_northstar: bool
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), index=True)
+    description = Column(Text)  # Assuming potentially long text
+    logo = Column(String(255))
+    website = Column(String(255))
+    linkedin = Column(String(255))
+    address_id = Column(Integer, ForeignKey("addresses.id"))
+    industry = Column(String(255))
+    founding_date = Column(String(10))  # Assuming date in 'YYYY-MM-DD'
+    status = Column(String(255))
+    phase = Column(String(255))
+    fte = Column(Integer)
+    equity_free_grants = Column(Integer)
+    business_model = Column(String(255))
+    target_market = Column(String(255))
+    last_update = Column(String(20))  # Adjust based on your datetime format
 
-
-class FoundingRound(BaseModel):
-    """Represents a founding round"""
-
-    number: int
-    amount: int
-    unit: str
-    date: datetime.date
-    investors: List[Investor]
-
-
-class Milestone:
-    """Represents a milestone"""
-
-    name: str
-    description: str
-    status: str
+    address = relationship("Address")
 
 
-class StartUp(BaseModel):
-    """Represents a startup"""
+class Skill(Base):
+    __tablename__ = "skills"
 
-    id: int
-    name: str
-    description: str
-    logo: str = "Not defined"
-    website: str
-    linkedin: str
-    address: Address
-    industry: str
-    founding_date: datetime.date
-    status: Literal["Working on it", "Crashed", "Exited"]
-    phase: Literal["FFF", "Pre-Seed", "Seed", "Series A", "Series B", "Series C+"]
-    fte: int
-    equity_free_grants: int
-    business_model: Literal["B2B", "B2C"]
-    target_market: str
-    # founders = List[Founder] = []  # type: ignore
-    kpis: List[KPI]
-    founding_rounds: List[FoundingRound]
-    # milestones: List[Milestone]
-    last_update: datetime.datetime = datetime.datetime.now()
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True)
 
 
-class Founder(BaseModel):
-    """Represents a founder"""
+class Education(Base):
+    __tablename__ = "educations"
 
-    id: int
-    name: str
-    picture: str = "Not defined"
-    mail: str
-    phone: str
-    linkedin: str
-    address: Address
-    birthdate: datetime.date
-    # cofounders: List[Founder] = []  # type: ignore
-    skills: List[Skill]
-    educations: List[Education]
-    startups: List[StartUp]
-    last_update: datetime.datetime
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True)
+
+
+class Experience(Base):
+    __tablename__ = "experiences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True)
+
+
+class Investor(Base):
+    __tablename__ = "investors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True)
+
+
+class KPI(Base):
+    __tablename__ = "kpis"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255))
+    value = Column(String(255))
+    unit = Column(String(255))
+    date = Column(String(10))  # Assuming date in 'YYYY-MM-DD'
+    is_northstar = Column(Boolean)
+
+
+class FoundingRound(Base):
+    __tablename__ = "founding_rounds"
+
+    id = Column(Integer, primary_key=True, index=True)
+    number = Column(Integer)
+    amount = Column(Integer)
+    unit = Column(String(255))
+    date = Column(String(10))  # Assuming date in 'YYYY-MM-DD'
+
+
+class Milestone(Base):
+    __tablename__ = "milestones"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255))
+    description = Column(Text)
+    status = Column(String(255))
