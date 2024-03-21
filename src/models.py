@@ -1,110 +1,64 @@
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, Table, Text
-from sqlalchemy.orm import relationship
+import datetime
+from sqlalchemy import (
+    Column,
+    Date,
+    String,
+    Integer,
+    DateTime,
+)
+
 from src.database import Base
 
 
-class Address(Base):
-    __tablename__ = "addresses"
-
-    id = Column(Integer, primary_key=True, index=True)
-    street = Column(String(255), index=True)
-    zip = Column(String(20), index=True)
-    city = Column(String(100), index=True)
-    country = Column(String(100), index=True)
-
-
 class Founder(Base):
-    __tablename__ = "founders"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), index=True)
-    picture = Column(String(255))
-    mail = Column(String(255))
-    phone = Column(String(25))
+    __tablename__ = "founder"
+    name = Column(String(255), primary_key=True)
+    image = Column(String(512))
+    email = Column(String(255))
+    phone = Column(String(255))
     linkedin = Column(String(255))
-    address_id = Column(Integer, ForeignKey("addresses.id"))
-    birthdate = Column(String(10))
-    last_update = Column(String(20))
+    address = Column(String(512))
+    birthdate = Column(String(255))
+    startup = Column(String(255))
+    role = Column(String(255))
+    skills = Column(String(512))
+    education_degree = Column(String(255))
+    education_school = Column(String(255))
+    professional_experience_job = Column(String(255))
+    professional_experience_company = Column(String(255))
+    last_update = Column(String(255))
 
-    address = relationship("Address")
 
-
-class StartUp(Base):
-    __tablename__ = "startups"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), index=True)
-    description = Column(Text)  # Assuming potentially long text
-    logo = Column(String(255))
+class Startup(Base):
+    __tablename__ = "startup"
+    name = Column(String(255), primary_key=True)
+    logo = Column(String(512))
+    description = Column(String(512))
     website = Column(String(255))
     linkedin = Column(String(255))
-    address_id = Column(Integer, ForeignKey("addresses.id"))
-    industry = Column(String(255))
-    founding_date = Column(String(10))  # Assuming date in 'YYYY-MM-DD'
+    address = Column(String(512))
+    founding_date = Column(String(255))
     status = Column(String(255))
     phase = Column(String(255))
-    fte = Column(Integer)
-    equity_free_grants = Column(Integer)
-    business_model = Column(String(255))
+    fte = Column(Integer())
+    equity_free_grants_chf = Column(Integer())
+    business_model_type = Column(String(255))
     target_market = Column(String(255))
-    last_update = Column(String(20))  # Adjust based on your datetime format
-
-    address = relationship("Address")
-
-
-class Skill(Base):
-    __tablename__ = "skills"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), unique=True)
+    last_update = Column(String(255))
+    kpis = Column(String(512))
+    last_funding_round = Column(String(512))
+    last_milestone = Column(String(512))
+    looking_for = Column(String(512))
 
 
-class Education(Base):
-    __tablename__ = "educations"
+class EventLog(Base):
+    __tablename__ = "event_logs"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), unique=True)
-
-
-class Experience(Base):
-    __tablename__ = "experiences"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), unique=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    startup_name = Column(String(512), nullable=False)
+    changed_field = Column(String(512), nullable=False)
+    old_value = Column(String(512), nullable=True)
+    new_value = Column(String(512), nullable=False)
+    timestamp = Column(String(512), nullable=False)
 
 
-class Investor(Base):
-    __tablename__ = "investors"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), unique=True)
-
-
-class KPI(Base):
-    __tablename__ = "kpis"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255))
-    value = Column(String(255))
-    unit = Column(String(255))
-    date = Column(String(10))  # Assuming date in 'YYYY-MM-DD'
-    is_northstar = Column(Boolean)
-
-
-class FoundingRound(Base):
-    __tablename__ = "founding_rounds"
-
-    id = Column(Integer, primary_key=True, index=True)
-    number = Column(Integer)
-    amount = Column(Integer)
-    unit = Column(String(255))
-    date = Column(String(10))  # Assuming date in 'YYYY-MM-DD'
-
-
-class Milestone(Base):
-    __tablename__ = "milestones"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255))
-    description = Column(Text)
-    status = Column(String(255))

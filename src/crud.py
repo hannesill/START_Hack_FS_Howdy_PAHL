@@ -1,114 +1,137 @@
+import datetime
 from sqlalchemy.orm import Session
-from src import models, schemas
+from . import models, schemas
+from sqlalchemy import func
 
 
-def get_address(db: Session, address_id: int):
-    return db.query(models.Address).filter(models.Address.id == address_id).first()
+def get_startup_by_name(db: Session, name: str):
+    startup = db.query(models.Startup).filter(models.Startup.name == name).first()
+    if startup:
+        startup.founders = (
+            db.query(models.Founder).filter(models.Founder.startup == name).all()
+        )
+    return startup
 
 
-def get_addresses(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Address).offset(skip).limit(limit).all()
+def get_founder_by_name(db: Session, name: str):
+    founder = db.query(models.Founder).filter(models.Founder.name == name).first()
+    if founder and founder.startup:
+        founder.co_founders = (
+            db.query(models.Founder)
+            .filter(
+                models.Founder.startup == founder.startup, models.Founder.name != name
+            )
+            .all()
+        )
+    return founder
 
 
-def create_address(db: Session, address: schemas.AddressCreate):
-    db_address = models.Address(**address.dict())
-    db.add(db_address)
-    db.commit()
-    db.refresh(db_address)
-    return db_address
+def get_all_startups(db: Session):
+    return db.query(models.Startup).all()
 
 
-def update_address(db: Session, address_id: int, address: schemas.AddressCreate):
-    db_address = (
-        db.query(models.Address).filter(models.Address.id == address_id).first()
-    )
-    if db_address:
-        for var, value in vars(address).items():
-            setattr(db_address, var, value) if value else None
-        db.commit()
-        db.refresh(db_address)
-    return db_address
+def get_all_startups_with_no_update(db: Session, delta: int):
+    threshold_date = datetime.datetime.now() - datetime.timedelta(days=delta)
+
+    startups_no_update = []
+
+    all_startups = db.query(models.Startup).all()
+
+    for startup in all_startups:
+        last_update_dt = datetime.datetime.strptime(
+            startup.last_update, "%d/%m/%Y, %H:%M:%S"
+        )
+
+        if last_update_dt < threshold_date:
+            startups_no_update.append(startup)
+
+    return startups_no_update
 
 
-def delete_address(db: Session, address_id: int):
-    db_address = (
-        db.query(models.Address).filter(models.Address.id == address_id).first()
-    )
-    if db_address:
-        db.delete(db_address)
-        db.commit()
-    return db_address
+def get_all_events(db: Session):
+    return db.query(models.EventLog).order_by("timestamp").all()
 
 
-def get_founder(db: Session, founder_id: int):
-    return db.query(models.Founder).filter(models.Founder.id == founder_id).first()
+def get_all_founders(db: Session):
+    return db.query(models.Founder).all()
 
 
-def get_founders(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Founder).offset(skip).limit(limit).all()
-
-
-def create_founder(db: Session, founder: schemas.FounderCreate):
-    db_founder = models.Founder(**founder.dict())
-    db.add(db_founder)
-    db.commit()
-    db.refresh(db_founder)
-    return db_founder
-
-
-def update_founder(db: Session, founder_id: int, founder: schemas.FounderCreate):
-    db_founder = (
-        db.query(models.Founder).filter(models.Founder.id == founder_id).first()
-    )
-    if db_founder:
-        for var, value in vars(founder).items():
-            setattr(db_founder, var, value) if value else None
-        db.commit()
-        db.refresh(db_founder)
-    return db_founder
-
-
-def delete_founder(db: Session, founder_id: int):
-    db_founder = (
-        db.query(models.Founder).filter(models.Founder.id == founder_id).first()
-    )
-    if db_founder:
-        db.delete(db_founder)
-        db.commit()
-    return db_founder
-
-
-def get_startup(db: Session, startup_id: int):
-    return db.query(models.StartUp).filter(models.StartUp.id == startup_id).first()
-
-
-def get_startups(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.StartUp).offset(skip).limit(limit).all()
-
-
-def create_startup(db: Session, startup: schemas.StartUpCreate):
-    db_startup = models.StartUp(**startup.dict())
+def create_startup(db: Session, startup: schemas.StartupCreate):
+    db_startup = models.Startup(**startup.dict())
+    db_startup.last_update = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
     db.add(db_startup)
     db.commit()
     db.refresh(db_startup)
     return db_startup
 
 
-def update_startup(db: Session, startup_id: int, startup: schemas.StartUpCreate):
+def create_founder(db: Session, founder: schemas.FounderCreate):
+    db_founder = models.Founder(**founder.dict())
+    db_founder.last_update = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+    db.add(db_founder)
+    db.commit()
+    db.refresh(db_founder)
+    return db_founder
+
+
+def update_startup(db: Session, startup_name: str, updates: schemas.StartupUpdate):
     db_startup = (
-        db.query(models.StartUp).filter(models.StartUp.id == startup_id).first()
+        db.query(models.Startup).filter(models.Startup.name == startup_name).first()
     )
+
     if db_startup:
-        for var, value in vars(startup).items():
-            setattr(db_startup, var, value) if value else None
+        for var, new_value in vars(updates).items():
+            if (
+                new_value
+            ):  
+                old_value = getattr(db_startup, var, None)
+                if old_value != new_value:
+                    setattr(db_startup, var, new_value)
+                    event = models.EventLog(
+                        startup_name=startup_name,
+                        changed_field=var,
+                        old_value=str(
+                            old_value
+                        ), 
+                        new_value=str(new_value),
+                        timestamp=datetime.datetime.now().strftime(
+                            "%d/%m/%Y, %H:%M:%S"
+                        ),
+                    )
+                    db.add(event)
+
+        setattr(
+            db_startup,
+            "last_update",
+            datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
+        )
+
         db.commit()
         db.refresh(db_startup)
+
     return db_startup
 
 
-def delete_startup(db: Session, startup_id: int):
+def update_founder(db: Session, founder_name: str, updates: schemas.FounderUpdate):
+    db_founder = (
+        db.query(models.Founder).filter(models.Founder.name == founder_name).first()
+    )
+    if db_founder:
+        for var, value in vars(updates).items():
+            setattr(db_founder, var, value) if value else None
+        setattr(
+            db_founder,
+            "last_update",
+            datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
+        )
+        db.commit()
+        db.refresh(db_founder)
+    return db_founder
+
+
+def delete_startup(db: Session, startup_name: str):
     db_startup = (
-        db.query(models.StartUp).filter(models.StartUp.id == startup_id).first()
+        db.query(models.Startup).filter(models.Startup.name == startup_name).first()
     )
     if db_startup:
         db.delete(db_startup)
@@ -116,302 +139,65 @@ def delete_startup(db: Session, startup_id: int):
     return db_startup
 
 
-def create_skill(db: Session, skill: schemas.SkillCreate):
-    db_skill = models.Skill(**skill.dict())
-    db.add(db_skill)
-    db.commit()
-    db.refresh(db_skill)
-    return db_skill
+def delete_founder(db: Session, founder_name: str):
+    db_founder = (
+        db.query(models.Founder).filter(models.Founder.name == founder_name).first()
+    )
+    if db_founder:
+        db.delete(db_founder)
+        db.commit()
+    return db_founder
 
 
-def get_skill(db: Session, skill_id: int):
-    return db.query(models.Skill).filter(models.Skill.id == skill_id).first()
-
-
-def get_skills(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Skill).offset(skip).limit(limit).all()
-
-
-# Education CRUD Operations
-def create_education(db: Session, education: schemas.EducationCreate):
-    db_education = models.Education(**education.dict())
-    db.add(db_education)
-    db.commit()
-    db.refresh(db_education)
-    return db_education
-
-
-def get_education(db: Session, education_id: int):
+def get_status_counts(db: Session):
     return (
-        db.query(models.Education).filter(models.Education.id == education_id).first()
+        db.query(
+            models.Startup.status, func.count(models.Startup.status).label("count")
+        )
+        .group_by(models.Startup.status)
+        .all()
     )
 
 
-def get_educations(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Skill).offset(skip).limit(limit).all()
-
-
-# Experience CRUD Operations
-def create_experience(db: Session, experience: schemas.ExperienceCreate):
-    db_experience = models.Experience(**experience.dict())
-    db.add(db_experience)
-    db.commit()
-    db.refresh(db_experience)
-    return db_experience
-
-
-def get_experience(db: Session, experience_id: int):
+def get_phase_counts(db: Session):
     return (
-        db.query(models.Experience)
-        .filter(models.Experience.id == experience_id)
-        .first()
+        db.query(models.Startup.phase, func.count(models.Startup.phase).label("count"))
+        .group_by(models.Startup.phase)
+        .all()
     )
 
 
-def get_experiences(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Experience).offset(skip).limit(limit).all()
+def get_avg_fte_and_grants_by_phase(db: Session):
+    results = (
+        db.query(
+            models.Startup.phase,
+            func.avg(models.Startup.fte).label("avg_fte"),
+            func.avg(models.Startup.equity_free_grants_chf).label(
+                "avg_equity_free_grants"
+            ),
+        )
+        .group_by(models.Startup.phase)
+        .all()
+    )
 
 
-# Investor CRUD Operations
-def create_investor(db: Session, investor: schemas.InvestorCreate):
-    db_investor = models.Investor(**investor.dict())
-    db.add(db_investor)
-    db.commit()
-    db.refresh(db_investor)
-    return db_investor
-
-
-def get_investor(db: Session, investor_id: int):
-    return db.query(models.Investor).filter(models.Investor.id == investor_id).first()
-
-
-def get_investors(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Investor).offset(skip).limit(limit).all()
-
-
-# KPI CRUD Operations
-def create_kpi(db: Session, kpi: schemas.KPICreate):
-    db_kpi = models.KPI(**kpi.dict())
-    db.add(db_kpi)
-    db.commit()
-    db.refresh(db_kpi)
-    return db_kpi
-
-
-def get_kpi(db: Session, kpi_id: int):
-    return db.query(models.KPI).filter(models.KPI.id == kpi_id).first()
-
-
-def get_kpis(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.KPI).offset(skip).limit(limit).all()
-
-
-# FoundingRound CRUD Operations
-def create_founding_round(db: Session, founding_round: schemas.FoundingRoundCreate):
-    db_founding_round = models.FoundingRound(**founding_round.dict())
-    # Handle Many-to-Many relationship for investors if necessary here
-    db.add(db_founding_round)
-    db.commit()
-    db.refresh(db_founding_round)
-    return db_founding_round
-
-
-def get_founding_round(db: Session, founding_round_id: int):
+def get_business_model_counts(db: Session):
     return (
-        db.query(models.FoundingRound)
-        .filter(models.FoundingRound.id == founding_round_id)
-        .first()
+        db.query(
+            models.Startup.business_model_type,
+            func.count(models.Startup.business_model_type).label("count"),
+        )
+        .group_by(models.Startup.business_model_type)
+        .all()
     )
 
 
-def get_founding_rounds(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.FoundingRound).offset(skip).limit(limit).all()
-
-
-# Milestone CRUD Operations
-def create_milestone(db: Session, milestone: schemas.MilestoneCreate):
-    db_milestone = models.Milestone(**milestone.dict())
-    db.add(db_milestone)
-    db.commit()
-    db.refresh(db_milestone)
-    return db_milestone
-
-
-def get_milestone(db: Session, milestone_id: int):
+def get_target_market_counts(db: Session):
     return (
-        db.query(models.Milestone).filter(models.Milestone.id == milestone_id).first()
+        db.query(
+            models.Startup.target_market,
+            func.count(models.Startup.target_market).label("count"),
+        )
+        .group_by(models.Startup.target_market)
+        .all()
     )
-
-
-def get_milestones(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Milestone).offset(skip).limit(limit).all()
-
-
-# Skill Update and Delete Operations
-def update_skill(db: Session, skill_id: int, skill: schemas.SkillCreate):
-    db_skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
-    if db_skill:
-        for key, value in skill.dict().items():
-            setattr(db_skill, key, value)
-        db.commit()
-        db.refresh(db_skill)
-    return db_skill
-
-
-def delete_skill(db: Session, skill_id: int):
-    db_skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
-    if db_skill:
-        db.delete(db_skill)
-        db.commit()
-    return db_skill
-
-
-# Education Update and Delete Operations
-def update_education(
-    db: Session, education_id: int, education: schemas.EducationCreate
-):
-    db_education = (
-        db.query(models.Education).filter(models.Education.id == education_id).first()
-    )
-    if db_education:
-        for key, value in education.dict().items():
-            setattr(db_education, key, value)
-        db.commit()
-        db.refresh(db_education)
-    return db_education
-
-
-def delete_education(db: Session, education_id: int):
-    db_education = (
-        db.query(models.Education).filter(models.Education.id == education_id).first()
-    )
-    if db_education:
-        db.delete(db_education)
-        db.commit()
-    return db_education
-
-
-# Experience Update and Delete Operations
-def update_experience(
-    db: Session, experience_id: int, experience: schemas.ExperienceCreate
-):
-    db_experience = (
-        db.query(models.Experience)
-        .filter(models.Experience.id == experience_id)
-        .first()
-    )
-    if db_experience:
-        for key, value in experience.dict().items():
-            setattr(db_experience, key, value)
-        db.commit()
-        db.refresh(db_experience)
-    return db_experience
-
-
-def delete_experience(db: Session, experience_id: int):
-    db_experience = (
-        db.query(models.Experience)
-        .filter(models.Experience.id == experience_id)
-        .first()
-    )
-    if db_experience:
-        db.delete(db_experience)
-        db.commit()
-    return db_experience
-
-
-# Investor Update and Delete Operations
-def update_investor(db: Session, investor_id: int, investor: schemas.InvestorCreate):
-    db_investor = (
-        db.query(models.Investor).filter(models.Investor.id == investor_id).first()
-    )
-    if db_investor:
-        for key, value in investor.dict().items():
-            setattr(db_investor, key, value)
-        db.commit()
-        db.refresh(db_investor)
-    return db_investor
-
-
-def delete_investor(db: Session, investor_id: int):
-    db_investor = (
-        db.query(models.Investor).filter(models.Investor.id == investor_id).first()
-    )
-    if db_investor:
-        db.delete(db_investor)
-        db.commit()
-    return db_investor
-
-
-# KPI Update and Delete Operations
-def update_kpi(db: Session, kpi_id: int, kpi: schemas.KPICreate):
-    db_kpi = db.query(models.KPI).filter(models.KPI.id == kpi_id).first()
-    if db_kpi:
-        for key, value in kpi.dict().items():
-            setattr(db_kpi, key, value)
-        db.commit()
-        db.refresh(db_kpi)
-    return db_kpi
-
-
-def delete_kpi(db: Session, kpi_id: int):
-    db_kpi = db.query(models.KPI).filter(models.KPI.id == kpi_id).first()
-    if db_kpi:
-        db.delete(db_kpi)
-        db.commit()
-    return db_kpi
-
-
-# FoundingRound Update and Delete Operations
-def update_founding_round(
-    db: Session, founding_round_id: int, founding_round: schemas.FoundingRoundCreate
-):
-    db_founding_round = (
-        db.query(models.FoundingRound)
-        .filter(models.FoundingRound.id == founding_round_id)
-        .first()
-    )
-    if db_founding_round:
-        for key, value in founding_round.dict().items():
-            setattr(db_founding_round, key, value)
-        # Handle investors update if necessary
-        db.commit()
-        db.refresh(db_founding_round)
-    return db_founding_round
-
-
-def delete_founding_round(db: Session, founding_round_id: int):
-    db_founding_round = (
-        db.query(models.FoundingRound)
-        .filter(models.FoundingRound.id == founding_round_id)
-        .first()
-    )
-    if db_founding_round:
-        db.delete(db_founding_round)
-        db.commit()
-    return db_founding_round
-
-
-# Milestone Update and Delete Operations
-def update_milestone(
-    db: Session, milestone_id: int, milestone: schemas.MilestoneCreate
-):
-    db_milestone = (
-        db.query(models.Milestone).filter(models.Milestone.id == milestone_id).first()
-    )
-    if db_milestone:
-        for key, value in milestone.dict().items():
-            setattr(db_milestone, key, value)
-        db.commit()
-        db.refresh(db_milestone)
-    return db_milestone
-
-
-def delete_milestone(db: Session, milestone_id: int):
-    db_milestone = (
-        db.query(models.Milestone).filter(models.Milestone.id == milestone_id).first()
-    )
-    if db_milestone:
-        db.delete(db_milestone)
-        db.commit()
-    return db_milestone

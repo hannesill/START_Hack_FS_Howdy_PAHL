@@ -1,185 +1,83 @@
-from typing import List, Literal, Optional
+from datetime import date, datetime
 from pydantic import BaseModel
-
-
-class AddressBase(BaseModel):
-    street: str
-    zip: str
-    city: str
-    country: str
-
-
-class AddressCreate(AddressBase):
-    pass
-
-
-class Address(AddressBase):
-    id: int
-
-    class Config:
-        from_attributes = True
+from typing import List, Optional
 
 
 class FounderBase(BaseModel):
     name: str
-    picture: Optional[str] = None
-    mail: str
+    image: Optional[str] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
     linkedin: Optional[str] = None
-    address_id: int
-    birthdate: str
-    last_update: str
+    address: Optional[str] = None
+    birthdate: Optional[str] = None
+    startup: Optional[str] = None
+    role: Optional[str] = None
+    skills: Optional[str] = None
+    education_degree: Optional[str] = None
+    education_school: Optional[str] = None
+    professional_experience_job: Optional[str] = None
+    professional_experience_company: Optional[str] = None
 
 
 class FounderCreate(FounderBase):
     pass
 
 
+class FounderUpdate(FounderBase):
+    pass
+
+
 class Founder(FounderBase):
-    id: int
+    last_update: Optional[str]
+    co_founders: List[FounderBase] = []
 
     class Config:
         from_attributes = True
 
 
-class StartUpBase(BaseModel):
+class StartupBase(BaseModel):
     name: str
-    description: str
-    logo: str
-    website: str
-    linkedin: str
-    address_id: int
-    industry: str
-    founding_date: str
-    status: Literal["Working on it", "Crashed", "Exited"]
-    phase: Literal["FFF", "Pre-Seed", "Seed", "Series A", "Series B", "Series C+"]
-    fte: int
-    equity_free_grants: int
-    business_model: Literal["B2B", "B2C"]
-    target_market: str
-    last_update: str
+    logo: Optional[str] = None
+    description: Optional[str] = None
+    website: Optional[str] = None
+    linkedin: Optional[str] = None
+    address: Optional[str] = None
+    founding_date: Optional[str] = None
+    status: Optional[str] = None
+    phase: Optional[str] = None
+    fte: Optional[int] = None
+    equity_free_grants_chf: Optional[int] = None
+    business_model_type: Optional[str] = None
+    target_market: Optional[str] = None
+    kpis: Optional[str] = None
+    last_funding_round: Optional[str] = None
+    last_milestone: Optional[str] = None
+    looking_for: Optional[str] = None
 
 
-class StartUpCreate(StartUpBase):
+class StartupCreate(StartupBase):
     pass
 
 
-class StartUp(StartUpBase):
-    id: int
+class StartupUpdate(StartupBase):
+    pass
+
+
+class Startup(StartupBase):
+    last_update: Optional[str]
+    founders: List[FounderBase] = (
+        []
+    ) 
 
     class Config:
         from_attributes = True
 
 
-class SkillBase(BaseModel):
-    name: str
-
-
-class SkillCreate(SkillBase):
-    pass
-
-
-class Skill(SkillBase):
+class Events(BaseModel):
     id: int
-
-    class Config:
-        from_attributes = True
-
-
-class EducationBase(BaseModel):
-    name: str
-
-
-class EducationCreate(EducationBase):
-    pass
-
-
-class Education(EducationBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-class ExperienceBase(BaseModel):
-    name: str
-
-
-class ExperienceCreate(ExperienceBase):
-    pass
-
-
-class Experience(ExperienceBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-class InvestorBase(BaseModel):
-    name: str
-
-
-class InvestorCreate(InvestorBase):
-    pass
-
-
-class Investor(InvestorBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-class KPIBase(BaseModel):
-    name: str
-    value: str
-    unit: str
-    date: str
-    is_northstar: bool
-
-
-class KPICreate(KPIBase):
-    pass
-
-
-class KPI(KPIBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-class FoundingRoundBase(BaseModel):
-    number: int
-    amount: int
-    unit: str
-    date: str
-
-
-class FoundingRoundCreate(FoundingRoundBase):
-    pass
-
-
-class FoundingRound(FoundingRoundBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-class MilestoneBase(BaseModel):
-    name: str
-    description: str
-    status: str
-
-
-class MilestoneCreate(MilestoneBase):
-    pass
-
-
-class Milestone(MilestoneBase):
-    id: int
-
-    class Config:
-        from_attributes = True
+    startup_name: str
+    changed_field: str
+    old_value: str
+    new_value: str
+    timestamp: str
