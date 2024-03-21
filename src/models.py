@@ -1,3 +1,4 @@
+from __future__ import annotations
 import datetime
 from typing import List, Literal
 from pydantic import BaseModel, Field
@@ -82,10 +83,10 @@ class StartUp(BaseModel):
     equity_free_grants: int
     business_model: Literal["B2B", "B2C"]
     target_market: str
-    founders = List[Founder] = []  # type: ignore
+    # founders = List[Founder] = []  # type: ignore
     kpis: List[KPI]
     founding_rounds: List[FoundingRound]
-    milestones: List[Milestone]
+    # milestones: List[Milestone]
     last_update: datetime.datetime = datetime.datetime.now()
 
 
@@ -100,7 +101,7 @@ class Founder(BaseModel):
     linkedin: str
     address: Address
     birthdate: datetime.date
-    cofounders: List[Founder] = []  # type: ignore
+    # cofounders: List[Founder] = []  # type: ignore
     skills: List[Skill]
     educations: List[Education]
     startups: List[StartUp]

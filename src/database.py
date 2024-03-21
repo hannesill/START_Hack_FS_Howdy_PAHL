@@ -1,8 +1,7 @@
 from neo4j import GraphDatabase
 
 
-class Database:
-
+class Neo4jConnection:
     def __init__(
         self,
         uri: str = "bolt://localhost:7687",
@@ -14,15 +13,20 @@ class Database:
         self.password = password
         self.driver = GraphDatabase.driver(uri, auth=(username, password))
 
-    def verify_connection(self):
-        """Verify that we can connect to Neo4j"""
+    def close(self):
+        if self.driver is not None:
+            self.driver.close()
 
-        def get_datetime(driver):
-            with driver.session() as session:
-                return session.run("RETURN datetime()").single()[0]
+    def query(self, query, parameters=None, db=None):
+        with self.driver.session(database=db) as session:
+            result = session.write_transaction(_execute_query, query, parameters)
+            return result
 
-        try:
-            current_datetime = get_datetime(self.driver)
-            print(f"Connection verified, current datetime in Neo4j: {current_datetime}")
-        except Exception as e:
-            print(f"Failed to verify connection: {e}")
+
+def _execute_query(tx, query, parameters):
+    result = tx.run(query, parameters)
+    try:
+        return [record for record in result]
+    except Exception as e:
+        print("Query failed:", e)
+        return None

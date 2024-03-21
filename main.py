@@ -1,7 +1,7 @@
-from fastapi import FastAPI
+import json
+from pathlib import Path
 
-from src.database import Database
+from src.models import Founder, StartUp
 
-app = FastAPI()
-
-Database().verify_connection()
+print(Founder(**json.loads(Path("samples/founders/1.json").read_text())))
+print(StartUp(**json.loads(Path("samples/startups/1.json").read_text())))

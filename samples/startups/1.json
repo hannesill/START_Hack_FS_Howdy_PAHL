@@ -1,0 +1,56 @@
+{
+    "id": 1,
+    "name": "Tech Innovations Inc.",
+    "description": "A startup focused on developing cutting-edge AI solutions.",
+    "logo": "https://example.com/logo.png",
+    "website": "https://www.techinnovations.com",
+    "linkedin": "https://www.linkedin.com/company/tech-innovations-inc",
+    "address": {
+        "street": "456 Innovation Drive",
+        "zip": 12345,
+        "city": "Innovate City",
+        "country": "Innovateland"
+    },
+    "industry": "Technology",
+    "founding_date": "2020-01-01",
+    "status": "Working on it",
+    "phase": "Series A",
+    "fte": 50,
+    "equity_free_grants": 100000,
+    "business_model": "B2B",
+    "target_market": "Technology companies",
+    "kpis": [
+        {
+            "name": "Monthly Active Users",
+            "value": "10000",
+            "unit": "users",
+            "date": "2024-03-01T00:00:00",
+            "is_northstar": true
+        }
+    ],
+    "founding_rounds": [
+        {
+            "number": 1,
+            "amount": 500000,
+            "unit": "USD",
+            "date": "2021-05-15",
+            "investors": [
+                {
+                    "name": "Venture Capital XYZ"
+                }
+            ]
+        },
+        {
+            "number": 2,
+            "amount": 2000000,
+            "unit": "USD",
+            "date": "2022-06-10",
+            "investors": [
+                {
+                    "name": "Angel Invest Inc."
+                }
+            ]
+        }
+    ],
+    "last_update": "2024-03-21T12:34:56"
+}

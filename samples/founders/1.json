@@ -1,0 +1,33 @@
+{
+    "id": 1,
+    "name": "Alex Johnson",
+    "picture": "https://example.com/picture.jpg",
+    "mail": "alex.johnson@example.com",
+    "phone": "+1234567890",
+    "linkedin": "https://www.linkedin.com/in/alexjohnson",
+    "address": {
+        "street": "123 Tech Lane",
+        "zip": 98765,
+        "city": "Techville",
+        "country": "Techland"
+    },
+    "birthdate": "1985-04-12",
+    "skills": [
+        {
+            "name": "Software Engineering"
+        },
+        {
+            "name": "Product Management"
+        }
+    ],
+    "educations": [
+        {
+            "name": "B.Sc. Computer Science"
+        },
+        {
+            "name": "MBA"
+        }
+    ],
+    "startups": [],
+    "last_update": "2024-03-21T12:34:56"
+}
