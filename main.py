@@ -3,11 +3,27 @@ from typing import List
 from sqlalchemy.orm import Session
 from src import crud, models, schemas
 from src.database import SessionLocal, engine
+from fastapi.middleware.cors import CORSMiddleware  # Import CORSMiddleware
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# Define a list of allowed origins for CORS
+origins = [
+    "http://localhost:5173",  # Add your frontend origin here, can be multiple
+    "http://localhost:3000",  # Example: Frontend development server
+    # Add any other origins as needed
+]
+
+# Add CORSMiddleware to the application
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # List of allowed origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 def get_db():
     db = SessionLocal()
@@ -15,6 +31,8 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Your FastAPI routes (endpoints) follow...
 
 
 @app.get("/startups/{startup_name}", response_model=schemas.Startup)
