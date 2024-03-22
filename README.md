@@ -2,6 +2,8 @@
 
 ![image](static/image.png)
 
+[Video](https://youtu.be/nsZb9yjBatA)
+
 ## Introduction
 
 Welcome to the GitHub repository of IncuTrack, an innovative application designed to revolutionize the way incubators and accelerators manage and engage with their alumni. At the heart of IncuTrack is the goal to foster a thriving community by maintaining strong connections with former students, tracking their progress, and facilitating founder interactions. Whether you're an incubator looking to streamline alumni relations or a founder seeking to connect with peers, IncuTrack provides the tools you need to cultivate a vibrant, supportive network.
